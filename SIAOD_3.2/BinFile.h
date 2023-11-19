@@ -101,7 +101,42 @@ int get_by_position(dict_word& word_to_return, string filename_bin, int pos) {
 
 }
 
-int rewrite_by_key(string filename_bin, string key) {
+//получить последнюю запись в файле в функции rewrite_by_position
+
+
+int rewrite_by_position(string filename_bin, int position, dict_word& last_record) {
+    fstream file(filename_bin, ios::binary | ios::out | ios::in);
+    if (!file.is_open()) {
+        cout << "Can not open the file\n";
+        return -1;
+    }
+    file.seekg(0, std::ios::end);
+    int fileSize = file.tellg();
+    int numRecords = fileSize / sizeof(dict_word);
+    int recordPos = position - 1;
+    if (recordPos < numRecords && recordPos >= 0) {
+        int WORD_SIZE = sizeof(dict_word);
+        file.seekg(-WORD_SIZE, std::ios::end);
+        dict_word last_word;
+        file.read(reinterpret_cast<char*>(&last_word), sizeof(dict_word));
+
+        last_record = last_word;
+
+        file.seekp(recordPos * sizeof(dict_word), std::ios::beg);
+        file.write(reinterpret_cast<const char*>(&last_word), sizeof(dict_word));
+
+        int newFileSize = fileSize - WORD_SIZE;
+        fs::resize_file(filename_bin, newFileSize);
+    }
+    else {
+        cout << "Wrong position\n";
+        return -1;
+    }
+    file.close();
+    return 0;
+}
+
+int rewrite_by_key(string filename_bin, char key[100]) {
     fstream file(filename_bin, ios::binary | ios::out | ios::in);
     if (!file.is_open()) {
         cout << "Can not open the file\n";
@@ -115,7 +150,7 @@ int rewrite_by_key(string filename_bin, string key) {
     for (int i = 0; i < numRecords; ++i) {
         dict_word word;
         file.read(reinterpret_cast<char*>(&word), sizeof(dict_word));
-        if (word.eng_word == key) {
+        if (strcmp(word.eng_word, key) == 0) {
             recordPos = i;
             break;
         }
@@ -192,6 +227,97 @@ int change_translation(string filename_bin, char key[100], char new_translation[
 
     file.close();
     return 0;
+}
+
+void testBinaryFile() {
+    setlocale(LC_ALL, "Russian");
+    string FILENAME_TEXT1;
+    string FILENAME_BIN1;
+    int command = 1;
+    int pos;
+    char key[100];
+    char new_translation[100];
+    dict_word word;
+    dict_word& word_link = word;
+
+    while (command != -1) {
+        cout << "¬ведите 1, чтобы преобразовать тестовые данные из текстового файла в двоичный файл" <<
+            "\n¬ведите 2, чтобы сохранить данные двоичного файла в текстовом" <<
+            "\n¬ведите 3, чтобы вывести все записи двоичного файла" <<
+            "\n¬ведите 4, чтобы получить доступ к записи по ее пор€дковому номеру в файле" <<
+            "\n¬ведите 5, чтобы выполнить удаление записи с заданным значением ключа путем замены на последнюю запись" <<
+            "\n¬ведите 6, чтобы сформировать список английских слов, начинающихс€ с указанной буквы и их русский перевод" <<
+            "\n¬ведите 7, чтобы обновить запись, записав новый вариант русского перевода по заданному слову" <<
+            "\n¬ведите 8,  чтобы выполнить удаление записи по ее пор€дковому номеру в файле" <<
+            "\n¬ведите -1, чтобы завершить работу программы\n";
+        cin >> command;
+        switch (command) {
+        case 1:
+            cout << "¬ведите им€ текстового файла\n";
+            cin >> FILENAME_TEXT1;
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            if (write_in_binfile(FILENAME_TEXT1, FILENAME_BIN1) == 0) cout << "”спех!\n";
+            break;
+        case 2:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            cout << "¬ведите им€ текстового файла\n";
+            cin >> FILENAME_TEXT1;
+            if (bin_to_txt(FILENAME_BIN1, FILENAME_TEXT1) == 0) cout << "”спех!\n";
+            break;
+        case 3:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            read_from_binfile(FILENAME_BIN1);
+            break;
+        case 4:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            cout << "¬ведите пор€дковый номер записи\n";
+            cin >> pos;
+
+            if (get_by_position(word_link, FILENAME_BIN1, pos) == 0) {
+                cout << "ѕолученное слово: " << word.eng_word << " " << word.rus_word << endl;
+            };
+            break;
+        case 5:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            cout << "¬ведите слово, которое хотите удалить\n";
+            cin >> key;
+            if (rewrite_by_key(FILENAME_BIN1, key) == 0) cout << "”спех!\n";
+            break;
+        case 6:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            char letter;
+            cout << "¬ведите букву\n";
+            cin >> letter;
+            print_words(letter, FILENAME_BIN1);
+            break;
+        case 7:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            cout << "¬ведите слово и его новый перевод через пробел\n";
+            cin >> key;
+            cin >> new_translation;
+            change_translation(FILENAME_BIN1, key, new_translation);
+            break;
+        case 8:
+            cout << "¬ведите им€ бинарного файла\n";
+            cin >> FILENAME_BIN1;
+            cout << "¬ведите пор€дковый номер записи\n";
+            cin >> pos;
+            if (rewrite_by_position(FILENAME_BIN1, pos, word) == 0) cout << "”спех!\nLast word : " << word.eng_word << "\n";
+            break;
+        case -1:
+            break;
+        default:
+            cout << " оманда введена неверно\n";
+            break;
+        }
+    }
 }
 
 

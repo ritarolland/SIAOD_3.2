@@ -5,25 +5,20 @@
 
 using namespace std;
 
-struct dict_word {
-
-    char eng_word[100] = {};
-    char rus_word[100] = {};
-
-    dict_word() {}
-    dict_word(char eng_word[100], char rus_word[100]) {
+struct Element {
+    int position;
+    char eng_word[100];
+    Element() {}
+    Element(char eng_word[100], int position) {
         strcpy_s(this->eng_word, eng_word);
-        strcpy_s(this->rus_word, rus_word);
+        this->position = position;
     }
-
 };
-
-
 
 struct HashTable {
     int capacity;
     int size;
-    dict_word** tableElements;
+    Element** tableElements;
 
     HashTable(int capacity);
     ~HashTable();
@@ -46,28 +41,28 @@ HashTable::~HashTable() {
 HashTable::HashTable(int capacity) {
     this->capacity = capacity;
     this->size = 0;
-    this->tableElements = new dict_word * [capacity];
+    this->tableElements = new Element * [capacity];
     for (int i = 0; i < capacity; i++) {
         tableElements[i] = nullptr;
     }
 }
 
-void print(HashTable* hashTable) {
-    for (int i = 0; i < hashTable->capacity; i++) {
-        if (hashTable->tableElements[i] != nullptr) {
-            cout << hashTable->tableElements[i]->eng_word << " " << hashTable->tableElements[i]->rus_word << endl;
+void print(HashTable hashTable) {
+    for (int i = 0; i < hashTable.capacity; i++) {
+        if (hashTable.tableElements[i] != nullptr) {
+            cout << hashTable.tableElements[i]->eng_word << " " << hashTable.tableElements[i]->position << endl;
         }
     }
 }
 
-void insert(HashTable*, char[100], char[100]);
+void insert(HashTable*, char[100], int);
 
 void rehash(HashTable* hashTable) {
 
     HashTable* newTable = new HashTable(hashTable->capacity * 2);
     for (int i = 0; i < hashTable->size; i++) {
         if (hashTable->tableElements[i] != nullptr) {
-            insert(newTable, hashTable->tableElements[i]->eng_word, hashTable->tableElements[i]->rus_word);
+            insert(newTable, hashTable->tableElements[i]->eng_word, hashTable->tableElements[i]->position);
         }
     }
     delete hashTable;
@@ -76,7 +71,7 @@ void rehash(HashTable* hashTable) {
 }
 
 
-void insert(HashTable* hashTable, char eng_word[100], char rus_word[100]) {
+void insert(HashTable* hashTable, char eng_word[100], int position) {
     if (hashTable->capacity == hashTable->size) {
         rehash(hashTable);
     }
@@ -84,11 +79,11 @@ void insert(HashTable* hashTable, char eng_word[100], char rus_word[100]) {
     while (hashTable->tableElements[index] != nullptr) {
         index = (index + 1) % hashTable->capacity;
     }
-    hashTable->tableElements[index] = new dict_word(eng_word, rus_word);
+    hashTable->tableElements[index] = new Element(eng_word, position);
     hashTable->size++;
 }
 
-dict_word* search(HashTable* hashTable, char eng_word[100]) {
+Element* search(HashTable* hashTable, char eng_word[100]) {
     int index = hashTable->hashFunction(eng_word);
 
     for (int iterations = 0; iterations < hashTable->capacity; iterations++) {

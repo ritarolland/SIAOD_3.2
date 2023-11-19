@@ -1,105 +1,51 @@
-﻿// SIAOD_3.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
+﻿// SIAOD_3.3.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
 //
-//#include "HashTableManagement.h"
-#include "BinFile.h"
+
+#include "FileByTable.h"
+
+const int DEFAULT_SIZE = 4;
+
 int main()
 {
     setlocale(LC_ALL, "Russian");
-    //HashTable* hashTable = new HashTable(11);
-    //char eng_word[100];
-    ///*strcpy_s(eng_word, "friend");
 
-    //cout << hashTable->hashFunction(eng_word);*/
-
-
-    //strcpy_s(eng_word, "pillow");
-    //char rus_word[100] = "подушка";
-
-    //insert(hashTable, eng_word, rus_word);
-    //strcpy_s(eng_word, "phone");
-    //strcpy_s(rus_word, "телефон");
-    //insert(hashTable, eng_word, rus_word);
-    //strcpy_s(eng_word, "friend");
-    //strcpy_s(rus_word, "друг");
-    //insert(hashTable, eng_word, rus_word);
-    //hashTable->print();
-    //dict_word* word = search(hashTable, eng_word);
-    //if(word != nullptr) cout << word->rus_word;
-    //strcpy_s(eng_word, "phone");
-    //deleteElement(hashTable, eng_word);
-    //cout << endl;
-    //hashTable->print();
-
-    string FILENAME_TEXT1;
-    string FILENAME_BIN1;
     int command = 1;
-    int pos;
-    char key[100];
-    char new_translation[100];
-    dict_word word;
-    dict_word& word_link = word;
+    HashTable* hashTable = new HashTable(DEFAULT_SIZE);
+    char eng_word[100];
+    int position;
+    Element* element = nullptr;
+
     while (command != -1) {
-        cout << "Введите 1, чтобы преобразовать тестовые данные из текстового файла в двоичный файл" <<
-            "\nВведите 2, чтобы сохранить данные двоичного файла в текстовом" <<
-            "\nВведите 3, чтобы вывести все записи двоичного файла" <<
-            "\nВведите 4, чтобы получить доступ к записи по ее порядковому номеру в файле" <<
-            "\nВведите 5, чтобы выполнить удаление записи с заданным значением ключа путем замены на последнюю запись" <<
-            "\nВведите 6, чтобы сформировать список английских слов, начинающихся с указанной буквы и их русский перевод" <<
-            "\nВведите 7, чтобы обновить запись, записав новый вариант русского перевода по заданному слову" <<
+        cout << "Введите 1, чтобы добавить новый элемент в хеш-таблицу" <<
+            "\nВведите 2, чтобы удалить элемент из таблицы по ключу" <<
+            "\nВведите 3, чтобы выполнить поиск по ключу" <<
+            "\nВведите 4, чтобы вывести таблицу на экран" <<
             "\nВведите -1, чтобы завершить работу программы\n";
         cin >> command;
         switch (command) {
         case 1:
-            cout << "Введите имя текстового файла\n";
-            cin >> FILENAME_TEXT1;
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            if (write_in_binfile(FILENAME_TEXT1, FILENAME_BIN1) == 0) cout << "Успех!\n";
+            cout << "Введите английское слово и его позицию через пробел\n";
+            cin >> eng_word >> position;
+            insert(hashTable, eng_word, position);
+            cout << "Выполнено!\n";
             break;
         case 2:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            cout << "Введите имя текстового файла\n";
-            cin >> FILENAME_TEXT1;
-            if (bin_to_txt(FILENAME_BIN1, FILENAME_TEXT1) == 0) cout << "Успех!\n";
+            cout << "Введите английское слово\n";
+            cin >> eng_word;
+            deleteElement(hashTable, eng_word);
+            cout << "Выполнено!\n";
             break;
         case 3:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            read_from_binfile(FILENAME_BIN1);
+            cout << "Введите английское слово\n";
+            cin >> eng_word;
+            element = search(hashTable, eng_word);
+            if (element != nullptr) {
+                cout << "Найденная запись: " << element->eng_word << element->position;
+            }
+            element = nullptr;
             break;
         case 4:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            cout << "Введите порядковый номер записи\n";
-            cin >> pos;
-
-            if (get_by_position(word_link, FILENAME_BIN1, pos) == 0) {
-                cout << "Полученное слово: " << word.eng_word << " " << word.rus_word << endl;
-            };
-            break;
-        case 5:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            cout << "Введите слово, которое хотите удалить\n";
-            cin >> key;
-            if (rewrite_by_key(FILENAME_BIN1, key) == 0) cout << "Успех!\n";
-            break;
-        case 6:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            char letter;
-            cout << "Введите букву\n";
-            cin >> letter;
-            print_words(letter, FILENAME_BIN1);
-            break;
-        case 7:
-            cout << "Введите имя бинарного файла\n";
-            cin >> FILENAME_BIN1;
-            cout << "Введите слово и его новый перевод через пробел\n";
-            cin >> key;
-            cin >> new_translation;
-            change_translation(FILENAME_BIN1, key, new_translation);
+            print(*hashTable);
             break;
         case -1:
             break;
@@ -107,8 +53,9 @@ int main()
             cout << "Команда введена неверно\n";
             break;
         }
-    }
 
+
+    }
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
